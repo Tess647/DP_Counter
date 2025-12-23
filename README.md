@@ -21,12 +21,42 @@ This project powers the backend for the Profile Picture Campaign, allowing users
 
 ## Features
 
-- **User Registration**: Save user information, including name and profile picture URL
-- **Fetch Users**: Retrieve a list of all registered users
-- **Secure Data Storage**: Stores user data in MongoDB with schema validation
-- **CORS Enabled**: Supports cross-origin requests from frontend applications
-- **RESTful API**: Clean and intuitive API design
-- **Error Handling**: Comprehensive error handling with meaningful messages
+### **Core Counter Functionality**
+- **Real-Time Download Tracking**: Accurately count DP (Download Points) downloads in real-time
+- **Singleton Counter Management**: Maintains a single, consistent counter document
+- **Automatic Counter Creation**: Creates counter document automatically on first use
+
+### **Data Integrity & Security**
+- **Idempotent Operations**: Prevents double-counting using unique download IDs
+- **Duplicate Download Prevention**: Tracks processed IDs to ensure each download is counted once
+- **Memory-Efficient Storage**: Limits stored download IDs to last 10,000 entries
+- **Data Validation**: Validates all incoming requests with proper error handling
+
+### **API Design**
+- **RESTful API**: Clean, intuitive REST endpoints following best practices
+- **CORS Enabled**: Configured to accept requests from authorized frontend origins
+- **Consistent Response Format**: Standardized JSON responses across all endpoints
+
+### **Database Features**
+- **MongoDB Integration**: Leverages MongoDB's flexibility and performance
+- **Schema Validation**: Enforces data structure using Mongoose schemas
+- **Automatic Timestamps**: Tracks when data was created and updated
+
+### **Developer Experience**
+- **Self-Healing System**: Automatically recovers from missing data
+- **Comprehensive Error Handling**: Detailed error messages with logging
+- **Admin Controls**: Reset functionality for testing and maintenance
+- **Easy Integration**: Simple API that works with any frontend framework
+
+### **Performance & Scalability**
+- **Efficient Database Queries**: Optimized MongoDB queries with singleton pattern
+- **Scalable Architecture**: Designed to handle increasing download volumes
+- **Low Latency**: Quick response times for read and write operations
+
+### **Operational Features**
+- **Zero Configuration Startup**: No initial database setup required
+- **Production-Ready**: Includes proper error handling and security considerations
+- **Testing-Friendly**: Clear separation of concerns for easy unit testing
 
 ---
 
@@ -130,147 +160,61 @@ http://localhost:5000/api/v1
 
 ### Endpoints
 
-| Method | Endpoint | Description | Request Body |
-|--------|----------|-------------|--------------|
-| GET | `/users/test` | Test backend connection | None |
-| GET | `/users` | Get all users | None |
-| POST | `/users` | Create a new user | `{ "name": "string" }` |
+## Download Counter API
 
-### Detailed Endpoint Documentation
-
-#### 1. Test Connection
+### Get Download Count
 ```http
-GET /api/v1/users/test
+GET /api/dp/count
 ```
 
 **Response:**
 ```json
 {
-  "message": "Backend is working!"
-}
-```
-
-#### 2. Get All Users
-```http
-GET /api/v1/users
-```
-
-**Success Response (200):**
-```json
-{
   "status": "success",
-  "results": 2,
-  "data": {
-    "users": [
-      {
-        "_id": "507f1f77bcf86cd799439011",
-        "name": "John Doe",
-        "profilePictureURL": "https://example.com/profile1.jpg",
-        "createdAt": "2024-12-15T10:30:00.000Z"
-      },
-      {
-        "_id": "507f1f77bcf86cd799439012",
-        "name": "Jane Smith",
-        "profilePictureURL": "https://example.com/profile2.jpg",
-        "createdAt": "2024-12-15T11:45:00.000Z"
-      }
-    ]
-  }
+  "count": 42,
+  "lastUpdated": "2024-12-23T10:30:00.000Z"
 }
 ```
 
-#### 3. Create User
+### Increment Download Count
 ```http
-POST /api/v1/users
+POST /api/dp/increment
 Content-Type: application/json
-```
 
-**Request Body:**
-```json
 {
-  "name": "John Doe",
-  "profilePictureURL": "https://example.com/profile.jpg"
+  "downloadId": "unique-download-id"
 }
 ```
 
-**Success Response (201):**
+**Success Response:**
 ```json
 {
   "status": "success",
-  "data": {
-    "user": {
-      "_id": "507f1f77bcf86cd799439011",
-      "name": "John Doe",
-      "profilePictureURL": "https://example.com/profile.jpg",
-      "createdAt": "2024-12-15T10:30:00.000Z"
-    }
-  }
+  "count": 43,
+  "message": "Count incremented successfully",
+  "alreadyCounted": false
 }
 ```
 
-**Error Response (400):**
+**Already Counted Response:**
 ```json
 {
-  "status": "fail",
-  "message": "Name and profile picture URL are required"
+  "status": "success",
+  "message": "Download already counted",
+  "count": 42,
+  "alreadyCounted": true
 }
 ```
-
----
-
-## Testing with Postman
-
-### Quick Start
-
-1. **Import Collection:**
-   - Download the Postman collection from the repository
-   - In Postman, click "Import" and select the collection file
-
-2. **Set Environment Variable:**
-   - Create a new environment in Postman
-   - Add variable: `base_url` = `http://localhost:5001/api/v1`
-
-3. **Test Sequence:**
-   - First, run "Test Connection" to verify the server is running
-   - Then, run "Create User" to add a test user
-   - Finally, run "Get All Users" to see your created user
-
-### Manual Testing Steps
-
-1. **Test Connection:**
-   - Method: GET
-   - URL: `http://localhost:5001/api/v1/users/test`
-   - Click "Send"
-
-2. **Create a User:**
-   - Method: POST
-   - URL: `http://localhost:5001/api/v1/users`
-   - Headers: `Content-Type: application/json`
-   - Body (raw JSON):
-```json
-   {
-     "name": "Test User",
-     "profilePictureURL": "https://example.com/test.jpg"
-   }
-```
-   - Click "Send"
-
-3. **Get All Users:**
-   - Method: GET
-   - URL: `http://localhost:5001/api/v1/users`
-   - Click "Send"
-
----
 
 ## Project Structure
 ```
 profile-picture-campaign-backend/
 ├── controllers/
-│   └── userController.js      # Request handlers
+│   └── dpController.js      # Request handlers
 ├── models/
-│   └── user.js                # User schema definition
+│   └── dpCounter.js                # User schema definition
 ├── routes/
-│   └── userRoutes.js          # API routes
+│   └── dpRoutes.js          # API routes
 ├── config.env                 # Environment variables (not committed)
 ├── config.env.example         # Example environment variables
 ├── app.js                     # Express app configuration
@@ -363,7 +307,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Your Name - [https://www.linkedin.com/in/taslihah-thanni-339b7b171/](https://www.linkedin.com/in/taslihah-thanni-339b7b171/)
 
-Project Link: [https://github.com/Tess647/DP_PROJECT.git](https://github.com/Tess647/DP_PROJECT.git)
+Project Link: [https://github.com/Tess647/DP_Counter](https://github.com/Tess647/DP_Counter)
 
 ---
 
