@@ -85,8 +85,8 @@ Before you begin, ensure you have the following installed:
 
 1. **Clone the repository:**
 ```bash
-   git clone https://github.com/your-username/profile-picture-campaign-backend.git
-   cd profile-picture-campaign-backend
+   git clone https://github.com/Tess647/DP_Counter.git
+   cd DP_Counter
 ```
 
 2. **Install dependencies:**
@@ -141,12 +141,12 @@ Start the server normally:
 npm start
 ```
 
-The server will run on `http://localhost:5001` (or your configured PORT).
+The server will run on `http://localhost:5000` (or your configured PORT).
 
 You should see:
 ```
 MongoDB Connected...
-App running on port 5001...
+App running on port 5000...
 ```
 
 ---
