@@ -39,10 +39,12 @@ exports.incrementCount = async (req, res) => {
       });
     }
 
-    const counter = await DPCounter.getCounter();
-
-    // Check if this download was already counted (prevent double-counting)
-    if (counter.downloadIds.includes(downloadId)) {
+    // Check if this download was already counted using the model method
+    const alreadyCounted = await DPCounter.hasDownloadId(downloadId);
+    
+    if (alreadyCounted) {
+      // Still return the current count
+      const counter = await DPCounter.getCounter();
       return res.status(200).json({
         status: "success",
         message: "Download already counted",
@@ -51,17 +53,8 @@ exports.incrementCount = async (req, res) => {
       });
     }
 
-    // Increment count and add downloadId
-    counter.count += 1;
-    counter.downloadIds.push(downloadId);
-    counter.lastUpdated = Date.now();
-    
-    // Keep only last 10000 downloadIds to prevent array from growing too large
-    if (counter.downloadIds.length > 10000) {
-      counter.downloadIds = counter.downloadIds.slice(-10000);
-    }
-
-    await counter.save();
+    // Use the new incrementCounter method which handles creation if needed
+    const counter = await DPCounter.incrementCounter(downloadId);
 
     res.status(200).json({
       status: "success",
@@ -84,11 +77,16 @@ exports.incrementCount = async (req, res) => {
  */
 exports.resetCount = async (req, res) => {
   try {
-    const counter = await DPCounter.getCounter();
-    counter.count = 0;
-    counter.downloadIds = [];
-    counter.lastUpdated = Date.now();
-    await counter.save();
+    // Instead of getting and updating, directly create/update with zero
+    const counter = await DPCounter.findOneAndUpdate(
+      {},
+      { count: 0, downloadIds: [], lastUpdated: new Date() },
+      { 
+        upsert: true, 
+        new: true,
+        setDefaultsOnInsert: true 
+      }
+    );
 
     res.status(200).json({
       status: "success",
